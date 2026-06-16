@@ -118,6 +118,19 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 
+const LOCAL_USER_KEY = 'gentle_challenge_user_id'
+
+function getUserId() {
+  let id = localStorage.getItem(LOCAL_USER_KEY)
+  if (!id) {
+    id = 'u_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 10)
+    localStorage.setItem(LOCAL_USER_KEY, id)
+  }
+  return id
+}
+
+const userId = getUserId()
+
 const loading = ref(true)
 const loadingHistory = ref(false)
 const challenge = ref(null)
@@ -144,7 +157,7 @@ const typeLabel = (type) => {
 async function fetchTodayChallenge() {
   loading.value = true
   try {
-    const response = await fetch('/api/challenge/today')
+    const response = await fetch(`/api/challenge/today?userId=${encodeURIComponent(userId)}`)
     const data = await response.json()
     challenge.value = data.challenge
     completed.value = data.completed
@@ -177,7 +190,7 @@ async function saveResponse() {
     const response = await fetch('/api/challenges', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ response: responseText.value })
+      body: JSON.stringify({ userId, response: responseText.value })
     })
     const data = await response.json()
 
@@ -199,7 +212,7 @@ async function openHistory() {
   showHistory.value = true
   loadingHistory.value = true
   try {
-    const response = await fetch('/api/challenges')
+    const response = await fetch(`/api/challenges?userId=${encodeURIComponent(userId)}`)
     const data = await response.json()
     historyList.value = data.challenges
     historyCount.value = data.total
@@ -212,7 +225,7 @@ async function openHistory() {
 
 async function fetchHistoryCount() {
   try {
-    const response = await fetch('/api/challenges')
+    const response = await fetch(`/api/challenges?userId=${encodeURIComponent(userId)}`)
     const data = await response.json()
     historyCount.value = data.total
   } catch (err) {

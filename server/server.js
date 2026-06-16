@@ -150,9 +150,14 @@ app.get('/api/secrets/random', (req, res) => {
 
 app.get('/api/challenge/today', (req, res) => {
   try {
+    const userId = req.query.userId;
+    if (!userId) {
+      return res.status(400).json({ error: '缺少用户标识' });
+    }
+
     const challenge = getTodayChallenge();
     const challenges = readChallenges();
-    const todayRecord = challenges.find(c => c.date === challenge.date);
+    const todayRecord = challenges.find(c => c.userId === userId && c.date === challenge.date);
     res.json({
       challenge: {
         date: challenge.date,
@@ -172,7 +177,11 @@ app.get('/api/challenge/today', (req, res) => {
 
 app.post('/api/challenges', (req, res) => {
   try {
-    const { response } = req.body;
+    const { userId, response } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ error: '缺少用户标识' });
+    }
 
     if (!response || !response.trim()) {
       return res.status(400).json({ error: '回应内容不能为空' });
@@ -184,10 +193,11 @@ app.post('/api/challenges', (req, res) => {
 
     const challenge = getTodayChallenge();
     const challenges = readChallenges();
-    const existingIndex = challenges.findIndex(c => c.date === challenge.date);
+    const existingIndex = challenges.findIndex(c => c.userId === userId && c.date === challenge.date);
 
     const record = {
       id: existingIndex >= 0 ? challenges[existingIndex].id : uuidv4(),
+      userId: userId,
       date: challenge.date,
       type: challenge.type,
       icon: challenge.icon,
@@ -219,8 +229,14 @@ app.post('/api/challenges', (req, res) => {
 
 app.get('/api/challenges', (req, res) => {
   try {
+    const userId = req.query.userId;
+    if (!userId) {
+      return res.status(400).json({ error: '缺少用户标识' });
+    }
+
     const challenges = readChallenges();
-    const sorted = [...challenges].sort((a, b) => new Date(b.date) - new Date(a.date));
+    const userChallenges = challenges.filter(c => c.userId === userId);
+    const sorted = [...userChallenges].sort((a, b) => new Date(b.date) - new Date(a.date));
     res.json({
       challenges: sorted,
       total: sorted.length
