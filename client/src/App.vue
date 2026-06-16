@@ -9,6 +9,9 @@
         <router-link to="/confess" class="nav-link" :class="{ active: $route.path === '/confess' }">
           倾诉秘密
         </router-link>
+        <router-link to="/challenge" class="nav-link" :class="{ active: $route.path === '/challenge' }">
+          温柔挑战
+        </router-link>
       </nav>
     </header>
     <main class="main">
